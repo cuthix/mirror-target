@@ -15,6 +15,14 @@ mirror-repo:
       - master
   script:
     - echo "$mirror_key" | tr -d '\r' | ssh-add - > /dev/null
+    - |
+      cat <<EOF > ~/.ssh/config
+      Host gitlab.com
+          Hostname gitlab.com
+          User git
+          Port 443
+          ProxyCommand connect-proxy -H $http_proxy %h %p
+      EOF
     - ssh git@gitlab.com
     - git clone "$CI_REPOSITORY_URL" --branch master _REPO_CLONE;
     - cd _REPO_CLONE
