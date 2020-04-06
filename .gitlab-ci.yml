@@ -24,7 +24,7 @@ mirror-repo:
           Port 443
           ProxyCommand connect-proxy -H $http_proxy %h %p
       EOF
-    - ssh git@gitlab.com
+    - ssh -vvv git@gitlab.com || echo "failed"
     - git clone "$CI_REPOSITORY_URL" --branch master _REPO_CLONE;
     - cd _REPO_CLONE
     - git remote add public $mirror_url
