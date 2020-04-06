@@ -15,6 +15,7 @@ mirror-repo:
       - master
   script:
     - echo "$mirror_key" | tr -d '\r' | ssh-add - > /dev/null
+    - ssh git@gitlab.com
     - git clone "$CI_REPOSITORY_URL" --branch master _REPO_CLONE;
     - cd _REPO_CLONE
     - git remote add public $mirror_url
