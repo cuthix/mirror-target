@@ -1,0 +1,23 @@
+image: gitlab.protontech.ch:4567/protonmail/desktop-bridge/ci
+
+before_script:
+  - eval $(ssh-agent -s)
+
+stages:
+  - mirror
+
+
+mirror-repo:
+  stage: mirror
+  only:
+    refs:
+      - tags
+      - master
+  script:
+    - echo "$mirror_key" | tr -d '\r' | ssh-add - > /dev/null
+    - git clone "$CI_REPOSITORY_URL" --branch master _REPO_CLONE;
+    - cd _REPO_CLONE
+    - git remote add public $mirror_url
+    - git push public master
+      # push the latest annotated tag from history
+    - git push public "$(git describe --abbrev=0 || echo master)"
