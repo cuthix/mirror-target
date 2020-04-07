@@ -47,5 +47,5 @@ mirror-repo:
     - cd _REPO_CLONE
     - git remote add public $mirror_url
     - git push public master
-    - #Pushing the latest annotated tag from history
+    #Pushing the latest annotated tag from history
     - git push public "$(git describe --abbrev=0 || echo master)"
