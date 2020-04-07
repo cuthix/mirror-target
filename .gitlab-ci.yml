@@ -7,12 +7,10 @@ before_script:
       Host gitlab.com
           Hostname gitlab.com
           User git
-          Port 443
           ProxyCommand connect-proxy -H $https_proxy %h %p
       Host github.com
           Hostname github.com
           User git
-          Port 443
           ProxyCommand connect-proxy -H $https_proxy %h %p
       EOF
     - eval $(ssh-agent -s)
@@ -30,7 +28,7 @@ mirror-repo:
       - master
   script:
     - ssh-add -l
-    - ssh -vvv git@github.com || echo "failed"
+    - ssh -v git@github.com || echo "failed"
     - git clone "$CI_REPOSITORY_URL" --branch master _REPO_CLONE;
     - cd _REPO_CLONE
     - git remote add public $mirror_url
