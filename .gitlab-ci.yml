@@ -10,7 +10,7 @@ before_script:
           Port 443
           ProxyCommand connect-proxy -H $https_proxy %h %p
       Host github.com
-          Hostname github.com
+          Hostname ssh.github.com
           User git
           Port 443
           ProxyCommand connect-proxy -H $https_proxy %h %p
@@ -43,9 +43,12 @@ mirror-repo:
   script:
     - ssh-add -l
     - ssh -v github.com || echo "failed"
+    - ssh -v gitlab.com || echo "failed"
     - git clone "$CI_REPOSITORY_URL" --branch master _REPO_CLONE;
     - cd _REPO_CLONE
-    - git remote add public $mirror_url
-    - git push public master
+    - git remote add public-hub git@github.com:cuthix/mirror-target.git
+    - git remote add public-lab git@gitlab.com:jakubkocutik/mirror-target.git
+    - git push public-hub master || echo "failed hub"
+    - git push public-lab master || echo "failed lab"
     #Pushing the latest annotated tag from history
-    - git push public "$(git describe --abbrev=0 || echo master)"
+    - git push public-hub "$(git describe --abbrev=0 || echo master)"
