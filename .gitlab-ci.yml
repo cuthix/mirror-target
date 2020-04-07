@@ -30,7 +30,7 @@ mirror-repo:
       - master
   script:
     - ssh-add -l
-    - ssh -vvv git@gitlab.com || echo "failed"
+    - ssh -vvv git@github.com || echo "failed"
     - git clone "$CI_REPOSITORY_URL" --branch master _REPO_CLONE;
     - cd _REPO_CLONE
     - git remote add public $mirror_url
