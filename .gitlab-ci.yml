@@ -8,7 +8,12 @@ before_script:
           Hostname gitlab.com
           User git
           Port 443
-          ProxyCommand connect-proxy -H $http_proxy %h %p
+          ProxyCommand connect-proxy -H $https_proxy %h %p
+      Host github.com
+          Hostname github.com
+          User git
+          Port 443
+          ProxyCommand connect-proxy -H $https_proxy %h %p
       EOF
     - eval $(ssh-agent -s)
     - echo "$mirror_key" | tr -d '\r' | ssh-add - > /dev/null
