@@ -1,54 +1,37 @@
 image: gitlab.protontech.ch:4567/protonmail/desktop-bridge/ci
 
 before_script:
-    - apt-get install -y connect-proxy
-    - |
-      cat <<EOF > ~/.ssh/config
-      Host gitlab.com
-          Hostname gitlab.com
-          User git
-          Port 443
-          ProxyCommand connect-proxy -H $https_proxy %h %p
-      Host github.com
-          Hostname ssh.github.com
-          User git
-          Port 443
-          ProxyCommand connect-proxy -H $https_proxy %h %p
-      EOF
-    - ssh-keyscan -t rsa ${CI_SERVER_HOST} > ~/.ssh/known_hosts
     - eval $(ssh-agent -s)
-    - echo "$mirror_key" | tr -d '\r' | ssh-add - > /dev/null
-    - |
-      cat <<EOF >> ~/.ssh/known_hosts
-      # ssh.github.com:443 SSH-2.0-babeld-2e9d163d
-      [ssh.github.com]:443 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
-      # gitlab.com:22 SSH-2.0-OpenSSH_7.2p2 Ubuntu-4ubuntu2.8
-      [gitlab.com]:443 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCsj2bNKTBSpIYDEGk9KxsGh3mySTRgMtXL583qmBpzeQ+jqCMRgBqB98u3z++J1sKlXHWfM9dyhSevkMwSbhoR8XIq/U0tCNyokEi/ueaBMCvbcTHhO7FcwzY92WK4Yt0aGROY5qX2UKSeOvuP4D6TPqKF1onrSzH9bx9XUf2lEdWT/ia1NEKjunUqu1xOB/StKDHMoX4/OKyIzuS0q/T1zOATthvasJFoPrAjkohTyaDUz2LN5JoH839hViyEG82yB+MjcFV5MU3N1l1QL3cVUCh93xSaua1N85qivl+siMkPGbO5xR/En4iEY6K2XPASUEMaieWVNTRCtJ4S8H+9
-      # gitlab.com:22 SSH-2.0-OpenSSH_7.2p2 Ubuntu-4ubuntu2.8
-      [gitlab.com]:443 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFSMqzJeV9rUzU4kWitGjeR4PWSa29SPqJ1fVkhtj3Hw9xjLVXVYrU9QlYWrOLXBpQ6KWjbjTDTdDkoohFzgbEY=
-      # gitlab.com:22 SSH-2.0-OpenSSH_7.2p2 Ubuntu-4ubuntu2.8
-      [gitlab.com]:443 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf
-      EOF
 
 stages:
   - mirror
-
 
 mirror-repo:
   stage: mirror
   only:
     refs:
-      - tags
       - master
   script:
+    - apt-get install -y connect-proxy
+    - |
+      cat <<EOF > ~/.ssh/config
+      Host github.com
+          Hostname ssh.github.com
+          User git
+          Port 443
+          ProxyCommand connect-proxy -H $http_proxy %h %p
+      EOF
+    - ssh-keyscan -t rsa ${CI_SERVER_HOST} > ~/.ssh/known_hosts
+    - |
+      cat <<EOF >> ~/.ssh/known_hosts
+      # ssh.github.com:443 SSH-2.0-babeld-2e9d163d
+      [ssh.github.com]:443 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+      EOF
+    - echo "$mirror_key" | tr -d '\r' | ssh-add - > /dev/null
     - ssh-add -l
-    - ssh -v github.com || echo "failed"
-    - ssh -v gitlab.com || echo "failed"
     - git clone "$CI_REPOSITORY_URL" --branch master _REPO_CLONE;
     - cd _REPO_CLONE
-    - git remote add public-hub git@github.com:cuthix/mirror-target.git
-    - git remote add public-lab git@gitlab.com:jakubkocutik/mirror-target.git
-    - git push public-hub master || echo "failed hub"
-    - git push public-lab master || echo "failed lab"
-    #Pushing the latest annotated tag from history
-    - git push public-hub "$(git describe --abbrev=0 || echo master)"
+    - git remote add public $mirror_url
+    - git push public master
+    # Pushing the latest tag from master history
+    - git push public "$(git describe --tags --abbrev=0 || echo master)"
